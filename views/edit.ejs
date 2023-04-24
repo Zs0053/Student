@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Document</title>
+  </head>
+  <body>
+    <form action="/students/edit/<%= data.id %>?_method=PUT" method="POST">
+      <label for="id">ID:</label>
+      <input type="number" id="id" name="id" value="<%= data.id %>" />
+      <label for="name">Name:</label>
+      <input type="text" id="name" name="name" value="<%= data.name %>" />
+      <label for="age">Age:</label>
+      <input type="number" id="age" name="age" value="<%= data.age %>" />
+      <label for="merit">Merit:</label>
+      <input
+        type="number"
+        id="merit"
+        name="merit"
+        value="<%= data.scholarship.merit %>"
+      />
+      <label for="other">Other:</label>
+      <input
+        type="number"
+        id="other"
+        name="other"
+        value="<%= data.scholarship.other %>"
+      />
+      <button>Submit</button>
+    </form>
+  </body>
+</html>

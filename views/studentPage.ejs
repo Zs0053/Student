@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title><%= data.name %></title>
+  </head>
+  <body>
+    <table>
+      <tr>
+        <td>Student ID</td>
+        <td><%= data.id %></td>
+      </tr>
+      <tr>
+        <td>Fullname</td>
+        <td><%= data.name %></td>
+      </tr>
+      <tr>
+        <td>Age</td>
+        <td><%= data.age %></td>
+      </tr>
+      <tr>
+        <td>Merit Scholarship</td>
+        <td><%= data.scholarship.merit %></td>
+      </tr>
+      <tr>
+        <td>Other Scholarship</td>
+        <td><%= data.scholarship.other %></td>
+      </tr>
+      <tr>
+        <td>Total Scholarship</td>
+        <td><%= data.scholarship.merit + data.scholarship.other %></td>
+      </tr>
+    </table>
+
+    <a href="/students">Go back to students page.</a>
+  </body>
+</html>
