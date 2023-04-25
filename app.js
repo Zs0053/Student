@@ -3,7 +3,7 @@ const app = express();
 const ejs = require("ejs");
 const mongoose = require("mongoose");
 const bodyParser = require("body-parser");
-const Student = require("./models/student");
+const User = require("./models/user");
 const methodOverride = require("method-override");
 const { response } = require("express");
 
@@ -14,7 +14,7 @@ app.set("view engine", "ejs");
 mongoose.set("useFindAndModify", false);
 
 mongoose
-  .connect("mongodb://localhost:27017/studentDB", {
+  .connect("mongodb://localhost:27017/billingDB", {
     useNewUrlParser: true,
     useUnifiedTopology: true,
   })
@@ -27,30 +27,36 @@ mongoose
   });
 
 app.get("/", (req, res) => {
-  res.send("This is homepage.");
+  res.send("Homepage of Billing Service.");
 });
 
-app.get("/students", async (req, res) => {
+app.get("/users", async (req, res) => {
   try {
-    let data = await Student.find();
-    res.render("students.ejs", { data });
+    let data = await User.find({});
+    /*
+    let data = await User.aggregate([
+      { $group: {_id: "$id"}},
+      { $project: {_id: 0, id: "$_id"}}
+    ]);
+    */
+    res.render("users.ejs", { data });
   } catch {
     res.send("Error with finding data.");
   }
 });
 
-app.get("/students/insert", (req, res) => {
-  res.render("studentInsert.ejs");
+app.get("/users/insert", (req, res) => {
+  res.render("userInsert.ejs");
 });
 
-app.get("/students/:id", async (req, res) => {
+app.get("/users/:id", async (req, res) => {
   let { id } = req.params;
   try {
-    let data = await Student.findOne({ id });
+    let data = await User.findOne({ id: id });
     if (data !== null) {
-      res.render("studentPage.ejs", { data });
+      res.render("userPage.ejs", { data });
     } else {
-      res.send("Cannot find this student. Please enter a valid id.");
+      res.send("Cannot find this user. Please enter a valid id.");
     }
   } catch (e) {
     res.send("Error!!");
@@ -58,61 +64,57 @@ app.get("/students/:id", async (req, res) => {
   }
 });
 
-app.post("/students/insert", (req, res) => {
+app.post("/users/insert", (req, res) => {
   let { id, name, age, merit, other } = req.body;
-  let newStudent = new Student({
+  let newUser = new User({
     id,
     name,
     age,
     scholarship: { merit, other },
   });
-  newStudent
+  newUser
     .save()
     .then(() => {
-      console.log("Student accepted.");
+      console.log("user accepted.");
       res.render("accept.ejs");
     })
     .catch((e) => {
-      console.log("Student not accepted.");
+      console.log("user not accepted.");
       console.log(e);
       res.render("reject.ejs");
     });
 });
 
-app.get("/students/edit/:id", async (req, res) => {
+app.get("/users/edit/:id", async (req, res) => {
   let { id } = req.params;
   try {
-    let data = await Student.findOne({ id });
+    let data = await User.findOne({ id });
     if (data !== null) {
       res.render("edit.ejs", { data });
     } else {
-      res.send("Cannot find student.");
+      res.send("Cannot find user.");
     }
   } catch {
     res.send("Error!");
   }
 });
 
-app.put("/students/edit/:id", async (req, res) => {
+app.put("/users/edit/:id", async (req, res) => {
   let { id, name, age, merit, other } = req.body;
   try {
-    let d = await Student.findOneAndUpdate(
+    let d = await User.findOneAndUpdate(
       { id },
-      { id, name, age, scholarship: { merit, other } },
-      {
-        new: true,
-        runValidators: true,
-      }
+      {name}
     );
-    res.redirect(`/students/${id}`);
+    res.redirect(`/users/${id}`);
   } catch {
     res.render("reject.ejs");
   }
 });
 
-app.delete("/students/delete/:id", (req, res) => {
+app.delete("/users/delete/:id", (req, res) => {
   let { id } = req.params;
-  Student.deleteOne({ id })
+  User.deleteOne({ id })
     .then((meg) => {
       console.log(meg);
       res.send("Deleted successfully.");

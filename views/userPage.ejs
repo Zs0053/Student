@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title><%= data.name %></title>
+  </head>
+  <body>
+    <table>
+      <tr>
+        <td>User ID</td>
+        <td><%= data.id %></td>
+      </tr>
+      <tr>
+        <td>User Name</td>
+        <td><%= data.name %></td>
+      </tr>
+      <tr>
+        <td>Service Type</td>
+        <td><%= data.service_type%></td>
+      </tr>
+      <tr>
+        <td>Previous Balance</td>
+        <td><%= data.previous_balance %></td>
+      </tr>
+      <tr>
+        <td>Change Amount</td>
+        <td><%= data.change_amount %></td>
+      </tr>
+      <tr>
+        <td>Current Balance</td>
+        <td><%= data.current_balance %></td>
+      </tr>
+      <tr>
+        <td>Date</td>
+        <td><%= data.time %></td>
+      </tr>
+      <tr>
+    </table>
+
+    <a href="/users">Go back to users page.</a>
+  </body>
+</html>
