@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Add new Operation</title>
+  </head>
+  <body>
+    <form action="/users/operation" method="POST">
+      <label for="id">ID:</label>
+      <input type="number" id="id" name="id" />
+      <label for="name">Name:</label>
+      <input type="text" id="name" name="name" />
+      <label for="service_type">Service Type:</label>
+      <input type="text" id="service_type" name="service_type" />
+      <label for="change_amount">Amount:</label>
+      <input type="number" id="change_amount" name="change_amount" />
+      <button>Submit</button>
+    </form>
+  </body>
+</html>
