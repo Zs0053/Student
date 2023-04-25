@@ -123,8 +123,9 @@ app.post("/users/insert", async(req, res) => {
 app.post("/users/operation", async(req, res) => {
   let { id, name, service_type, change_amount} = req.body;
   let user = await User.findOne({ id: id });
-  let previous_balance = user.current_balance;
+  let previous_balance = Number(user.current_balance);
   let break_flag = false;
+  change_amount = Number(change_amount);
   if (service_type == "Deposit" && change_amount > 0) {
     var current_balance = previous_balance + change_amount;
   } else if ((service_type == "Withdraw" || service_type == "Billing") && change_amount > 0 && change_amount < previous_balance) {
