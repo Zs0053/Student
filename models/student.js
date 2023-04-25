@@ -1,32 +1,41 @@
 const mongoose = require("mongoose");
 
-const studentSchema = new mongoose.Schema({
-  id: {
-    type: Number,
+const userSchema = new mongoose.Schema({
+  id : {
+    type: Integer,
     required: true,
+    unique: true,
+    index: true,
   },
   name: {
     type: String,
     required: true,
   },
-  age: {
-    type: Number,
-    default: 18,
-    max: [80, "Too old in this school"],
+  service_type: {
+    type: String,
+    required: true,
   },
-  scholarship: {
-    merit: {
-      type: Number,
-      min: 0,
-      max: [5000, "Too much merit scholarship"],
-    },
-    other: {
-      type: Number,
-      min: 0,
-    },
+  previous_balance: {
+    type: Double,
+    required: true,
+    min: 0.00,
   },
+  change_amount: {
+    type: Double,
+    required: true,
+    min: 0.00,
+  },
+  current_balance: {
+    type: Double,
+    required: true,
+    min: 0.00,
+  },
+  time: {
+    type: Date,
+    required: true,
+  }
 });
 
-const Student = mongoose.model("Student", studentSchema);
+const User = mongoose.model("User", userSchema);
 
-module.exports = Student;
+module.exports = User;
