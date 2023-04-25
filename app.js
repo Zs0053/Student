@@ -64,13 +64,22 @@ app.get("/users/:id", async (req, res) => {
   }
 });
 
-app.post("/users/insert", (req, res) => {
-  let { id, name, age, merit, other } = req.body;
+app.post("/users/insert", async(req, res) => {
+  let { id, name} = req.body;
+  let service_type = "Create Account";
+  let previous_balance = 0;
+  let change_amount = 100;
+  let current_balance = previous_balance + change_amount;
+  let data = await User.findOne({ id: id });
+  if (data !== null) {
+    res.send("ID conflict.")
+  } else {
   let newUser = new User({
     id,
     name,
-    age,
-    scholarship: { merit, other },
+    service_type,
+    change_amount,
+    current_balance,
   });
   newUser
     .save()
@@ -83,6 +92,7 @@ app.post("/users/insert", (req, res) => {
       console.log(e);
       res.render("reject.ejs");
     });
+  }
 });
 
 app.get("/users/edit/:id", async (req, res) => {
@@ -100,7 +110,7 @@ app.get("/users/edit/:id", async (req, res) => {
 });
 
 app.put("/users/edit/:id", async (req, res) => {
-  let { id, name, age, merit, other } = req.body;
+  let { id, name } = req.body;
   try {
     let d = await User.findOneAndUpdate(
       { id },
