@@ -1,12 +1,12 @@
 {
-  "name": "student-project",
+  "name": "billing-project",
   "version": "1.0.0",
   "description": "This is for mongoose and express together",
   "main": "app.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
-  "author": "",
+  "author": "Cheng-Yu Hsieh, Zhao Song, Qiu Lin",
   "license": "ISC",
   "dependencies": {
     "ejs": "^3.1.5",

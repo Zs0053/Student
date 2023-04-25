@@ -6,17 +6,15 @@
     <title>Add New Student</title>
   </head>
   <body>
-    <form action="/students/insert" method="POST">
+    <form action="/users/insert" method="POST">
       <label for="id">ID:</label>
       <input type="number" id="id" name="id" />
       <label for="name">Name:</label>
       <input type="text" id="name" name="name" />
-      <label for="age">Age:</label>
-      <input type="number" id="age" name="age" />
-      <label for="merit">Merit:</label>
-      <input type="number" id="merit" name="merit" />
-      <label for="other">Other:</label>
-      <input type="number" id="other" name="other" />
+      <label for="service_type">Service Type:</label>
+      <input type="text" id="service_type" name="service_type" />
+      <label for="amount">Amount:</label>
+      <input type="number" id="amount" name="amount" />
       <button>Submit</button>
     </form>
   </body>
