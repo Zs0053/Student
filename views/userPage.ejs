@@ -16,18 +16,6 @@
         <td><%= data.name %></td>
       </tr>
       <tr>
-        <td>Service Type</td>
-        <td><%= data.service_type%></td>
-      </tr>
-      <tr>
-        <td>Previous Balance</td>
-        <td><%= data.previous_balance %></td>
-      </tr>
-      <tr>
-        <td>Change Amount</td>
-        <td><%= data.change_amount %></td>
-      </tr>
-      <tr>
         <td>Current Balance</td>
         <td><%= data.current_balance %></td>
       </tr>
@@ -37,7 +25,21 @@
       </tr>
       <tr>
     </table>
-
+    <br>
+    <a>Service Type   Previous Balance   Change Amount  Current Balance  Date </a>
+    <tbody>
+      <% records.reverse().forEach(function(records) { %>
+        <tr>
+          <br>
+          <td><%= records.service_type %></td>
+          <td><%= records.previous_balance %></td>
+          <td><%= records.change_amount %></td>
+          <td><%= records.current_balance %></td>
+          <td><%= records.time %></td>
+        </tr>
+      <% }); %>
+    </tbody>
+    <br>
     <a href="/users">Go back to users page.</a>
   </body>
 </html>

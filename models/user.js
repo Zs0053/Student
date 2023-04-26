@@ -1,5 +1,6 @@
 const mongoose = require("mongoose");
 
+// id: 1, name: Alice, current_balance: 0, time: now
 const userSchema = new mongoose.Schema({
   id : {
     type: Number,
@@ -11,25 +12,11 @@ const userSchema = new mongoose.Schema({
     type: String,
     required: true,
   },
-  service_type: {
-    type: String,
-    required: true,
-  },
-  previous_balance: {
-    type: Number,
-    required: true,
-    default: 0,
-    min: 0,
-  },
-  change_amount: {
-    type: Number,
-    required: true,
-    min: 0.00,
-  },
   current_balance: {
     type: Number,
     required: true,
-    min: 0.00,
+    min: 0,
+    default: 0,
   },
   time: {
     type: Date,
