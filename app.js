@@ -192,16 +192,25 @@ app.put("/users/edit/:id", async (req, res) => {
   }
 });
 
+
 app.delete("/users/delete/:id", (req, res) => {
   let { id } = req.params;
+  console.log(id)
   User.deleteOne({ id })
     .then((meg) => {
       console.log(meg);
-      res.send("Deleted successfully.");
     })
     .catch((e) => {
       console.log(e);
-      res.send("Delete failed.");
+    });
+    Record.deleteMany({ id })
+    .then((meg) => {
+      console.log(meg);
+      res.send("Record and user Deleted successfully.");
+    })
+    .catch((e) => {
+      console.log(e);
+      res.send("Record and user  Delete failed.");
     });
 });
 

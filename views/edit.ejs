@@ -6,6 +6,8 @@
     <title>Document</title>
   </head>
   <body>
+    <a>Edit User Info</a>
+    <!-- form method can only post and get   we inport a methodoverride npm to make this accept PUT req  -->
     <form action="/users/edit/<%= data.id %>?_method=PUT" method="POST">
       <label for="name">Name:</label>
       <input type="text" id="name" name="name" value="<%= data.name %>" />
