@@ -266,12 +266,10 @@ app.get("/users/edit/:id",loginverify, async (req, res) => {
 });
 
 app.put("/users/edit/:id",loginverify, async (req, res) => {
-  let { id, name } = req.body;
+  let { id } = req.params;
+  let { name } = req.body;
   try {
-    let d = await User.findOneAndUpdate(
-      { id: id },
-      {name: name}
-    );
+    let d = await User.findOneAndUpdate({ id },{name});
     res.redirect(`/users/${id}`);
   } catch {
     res.render("reject.ejs");
@@ -279,7 +277,7 @@ app.put("/users/edit/:id",loginverify, async (req, res) => {
 });
 
 
-app.delete("/users/delete/:id", loginverify, (req, res) => {
+app.delete("/users/delete/:id",loginverify,(req, res) => {
   let { id } = req.params;
   console.log(id)
   User.deleteOne({ id })
