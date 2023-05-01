@@ -131,8 +131,8 @@ app.get("/users", loginverify , async (req, res) => {
 });
 
 // Get the insert page
-app.get("/users/insert", loginverify, (req, res) => {
-  res.render("userInsert.ejs");
+app.get("/users/create", loginverify, (req, res) => {
+  res.render("userCreate.ejs");
 });
 
 // Get the operation page
@@ -160,8 +160,8 @@ app.get("/users/:id", loginverify, async (req, res) => {
 });
 
 // Create a new users
-app.post("/users/insert",loginverify, async(req, res) => {
-  let { id, name} = req.body;
+app.post("/users/create", loginverify, async (req, res) => {
+  let { id, name } = req.body;
   let service_type = "Create Account";
   let previous_balance = 0;
   let change_amount = 100;
@@ -169,68 +169,70 @@ app.post("/users/insert",loginverify, async(req, res) => {
 
   let data = await User.findOne({ id: id });
   if (data !== null) {
-    res.send("ID conflict.")
+    res.send("ID conflict.");
   } else {
-  let newUser = new User({
-    id,
-    name,
-    current_balance
-  });
-  newUser
-    .save()
-    .then(() => {
-      console.log("user accepted.");
+    try {
+      let newUser = new User({
+        id,
+        name,
+        current_balance,
+      });
+
+      let newRecord = new Record({
+        id,
+        service_type,
+        previous_balance,
+        change_amount,
+        current_balance,
+      });
+
+      await newUser.save();
+      await newRecord.save();
+
+      console.log("user and record accepted.");
       res.render("accept.ejs");
-    })
-    .catch((e) => {
-      console.log("user not accepted.");
+    } catch (e) {
+      console.log("user and record not accepted.");
       console.log(e);
       res.render("reject.ejs");
-    });
-  let newRecord = new Record({
-    id,
-    service_type,
-    previous_balance,
-    change_amount,
-    current_balance,
-  });
-  newRecord
-    .save()
-    .then(() => {
-      console.log("record accepted.");
-      res.render("accept.ejs");
-    })
-    .catch((e) => {
-      console.log("record not accepted.");
-      console.log(e);
-      res.render("reject.ejs");
-    });
+    }
   }
 });
 
-app.post("/users/operation", loginverify,async(req, res) => {
-  let { id, name, service_type, change_amount} = req.body;
-  let user = await User.findOne({ id: id });
-  let previous_balance = Number(user.current_balance);
-  let break_flag = false;
-  change_amount = Number(change_amount);
-  if ((service_type == "Deposit" || service_type == "Credit") && change_amount > 0) {
-    var current_balance = previous_balance + change_amount;
-  } else if ((service_type == "Withdraw" || service_type == "Billing") && change_amount > 0 && change_amount < previous_balance) {
-    var current_balance = previous_balance - change_amount;
-  } else {
-    res.send("Invalid Service Type or Amount.");
-    break_flag = true;
-  }
+app.post("/users/operation", loginverify, async (req, res) => {
+  let { id, name, service_type, change_amount } = req.body;
+  try {
+    let user = await User.findOne({ id: id });
+    if (!user) {
+      res.send("User not found.");
+      return;
+    }
+    
+    let previous_balance = Number(user.current_balance);
+    change_amount = Number(change_amount);
+    let current_balance;
 
-  if (break_flag !== true) {
-    User.updateOne({ id: id}, { current_balance: current_balance }, function(error, result) {
-      if (error) {
-        console.log(error);
-      } else {
-        console.log(result);
-      }
-    });
+    if (
+      (service_type == "Deposit" || service_type == "Credit") &&
+      change_amount > 0
+    ) {
+      current_balance = previous_balance + change_amount;
+    } else if (
+      (service_type == "Withdraw" || service_type == "Billing") &&
+      change_amount > 0 &&
+      change_amount <= previous_balance
+    ) {
+      current_balance = previous_balance - change_amount;
+    } else {
+      res.send("Invalid Service Type or Amount.");
+      return;
+    }
+
+    await User.updateOne(
+      { id: id },
+      { current_balance: current_balance }
+    );
+
     let newRecord = new Record({
       id,
       service_type,
@@ -238,25 +240,21 @@ app.post("/users/operation", loginverify,async(req, res) => {
       change_amount,
       current_balance,
     });
-    newRecord
-    .save()
-    .then(() => {
-      console.log("record accepted.");
-      res.render("accept.ejs");
-    })
-    .catch((e) => {
-      console.log("record not accepted.");
-      console.log(e);
-      res.render("reject.ejs");
-    });
+
+    await newRecord.save();
+    console.log("record accepted.");
+    res.render("accept.ejs");
+  } catch (e) {
+    console.log("record not accepted.");
+    console.log(e);
+    res.render("reject.ejs");
   }
 });
-
 
 app.get("/users/edit/:id",loginverify, async (req, res) => {
   let { id } = req.params;
   try {
-    let data = await User.findOne({ id });
+    let data = await User.findOne({ id : id});
     if (data !== null) {
       res.render("edit.ejs", { data });
     } else {
@@ -271,8 +269,8 @@ app.put("/users/edit/:id",loginverify, async (req, res) => {
   let { id, name } = req.body;
   try {
     let d = await User.findOneAndUpdate(
-      { id },
-      {name}
+      { id: id },
+      {name: name}
     );
     res.redirect(`/users/${id}`);
   } catch {
@@ -281,7 +279,7 @@ app.put("/users/edit/:id",loginverify, async (req, res) => {
 });
 
 
-app.delete("/users/delete/:id", loginverify,(req, res) => {
+app.delete("/users/delete/:id", loginverify, (req, res) => {
   let { id } = req.params;
   console.log(id)
   User.deleteOne({ id })
