@@ -40,6 +40,21 @@
       <% }); %>
     </tbody>
     <br>
+    <button id="deleteButton">Delete User and Record</button>
     <a href="/users">Go back to users page.</a>
   </body>
+  <script type="text/javascript">
+    document.getElementById("deleteButton").addEventListener("click", deleteItem);
+
+    function deleteItem() {
+    var xhr = new XMLHttpRequest();
+    xhr.open("DELETE", "/users/delete/<%= data.id %>", true);
+    xhr.onreadystatechange = function() {
+      if (xhr.readyState === 4 && xhr.status === 200) {
+        window.location.href = "deleted.ejs";
+      }
+    };
+    xhr.send();
+  }
+  </script>
 </html>

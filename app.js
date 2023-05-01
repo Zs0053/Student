@@ -164,7 +164,7 @@ app.post("/users/operation", async(req, res) => {
   }
 });
 
-
+// 
 app.get("/users/edit/:id", async (req, res) => {
   let { id } = req.params;
   try {
@@ -206,7 +206,7 @@ app.delete("/users/delete/:id", (req, res) => {
     Record.deleteMany({ id })
     .then((meg) => {
       console.log(meg);
-      res.send("Record and user Deleted successfully.");
+      res.render("deleted.ejs");
     })
     .catch((e) => {
       console.log(e);
