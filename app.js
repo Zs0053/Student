@@ -6,12 +6,32 @@ const bodyParser = require("body-parser");
 const User = require("./models/user");
 const Record = require("./models/record");
 const methodOverride = require("method-override");
-const { response } = require("express");
+const Admin = require("./models/admin")
+const session = require("express-session")
+const cookieParser = require("cookie-parser")
 
+
+app.use(cookieParser())
 app.use(express.static("public"));
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(methodOverride("_method"));
 app.set("view engine", "ejs");
+
+app.use(session({
+  secret: 'keyboard cat',
+  resave: false,
+  saveUninitialized: true,
+}))
+const loginverify = (req , res , next) =>{
+  if(!req.session.isVerifed == true){
+    res.redirect("login")
+  }else{
+    next()
+  }
+}
+
+
+
 mongoose.set("useFindAndModify", false);
 
 mongoose
@@ -31,9 +51,53 @@ app.get("/", (req, res) => {
   res.send("Homepage of Billing Service.");
 });
 
+app.post("/login", async(req, res) => {
+  let {username , password} = req.body
+
+    let foundUser = await Admin.findOne({username : username})
+    if (!foundUser){
+      res.send("UserName incorrect")
+    }else{
+      if(password == foundUser.password){
+        req.session.isVerifed = true
+        console.log(req.session.isVerifed)
+        console.log(req.cookies)
+        res.send("Login successfully , This is Homepage of Billing Service.");
+      }else{
+        res.send("Password incorrect")
+      }
+    }
+});
+
+app.get("/login", (req, res) => {
+  res.render("login");
+});
+
+
+app.post("/signup", async(req, res) => {
+  let {username , password} = req.body
+  
+  let foundUser = await Admin.findOne({username : username})
+  if(!foundUser){
+    let newAdmin = new Admin({username , password})
+    newAdmin.save().then(() =>{
+      res.send("Signup successfully , This is Homepage of Billing Service.");
+    }).catch(()=>{
+      res.send("Error!")
+    })
+  }else{
+    res.send("UserName exist")
+  }
+  
+});
+
+app.get("/signup", (req, res) => {
+  res.render("signup.ejs");
+});
+
 // Complete
 // List all users
-app.get("/users", async (req, res) => {
+app.get("/users", loginverify , async (req, res) => {
   try {
     let data = await User.find({});
     res.render("users.ejs", { data });
@@ -42,16 +106,16 @@ app.get("/users", async (req, res) => {
   }
 });
 // Get the insert page
-app.get("/users/insert", (req, res) => {
+app.get("/users/insert", loginverify, (req, res) => {
   res.render("userInsert.ejs");
 });
 // Get the operation page
-app.get("/users/operation", (req, res) => {
+app.get("/users/operation", loginverify,(req, res) => {
   res.render("userOperation.ejs");
 });
 // Complete
 // List all records given the id
-app.get("/users/:id", async (req, res) => {
+app.get("/users/:id", loginverify, async (req, res) => {
   let { id } = req.params;
   try {
     // All records
@@ -72,7 +136,7 @@ app.get("/users/:id", async (req, res) => {
 
 // Complete
 // Create a new users
-app.post("/users/insert", async(req, res) => {
+app.post("/users/insert",loginverify, async(req, res) => {
   let { id, name} = req.body;
   let service_type = "Create Account";
   let previous_balance = 0;
@@ -120,7 +184,7 @@ app.post("/users/insert", async(req, res) => {
   }
 });
 
-app.post("/users/operation", async(req, res) => {
+app.post("/users/operation", loginverify,async(req, res) => {
   let { id, name, service_type, change_amount} = req.body;
   let user = await User.findOne({ id: id });
   let previous_balance = Number(user.current_balance);
@@ -165,7 +229,7 @@ app.post("/users/operation", async(req, res) => {
 });
 
 
-app.get("/users/edit/:id", async (req, res) => {
+app.get("/users/edit/:id",loginverify, async (req, res) => {
   let { id } = req.params;
   try {
     let data = await User.findOne({ id });
@@ -179,7 +243,7 @@ app.get("/users/edit/:id", async (req, res) => {
   }
 });
 
-app.put("/users/edit/:id", async (req, res) => {
+app.put("/users/edit/:id",loginverify, async (req, res) => {
   let { id, name } = req.body;
   try {
     let d = await User.findOneAndUpdate(
@@ -193,7 +257,7 @@ app.put("/users/edit/:id", async (req, res) => {
 });
 
 
-app.delete("/users/delete/:id", (req, res) => {
+app.delete("/users/delete/:id", loginverify,(req, res) => {
   let { id } = req.params;
   console.log(id)
   User.deleteOne({ id })
@@ -212,6 +276,16 @@ app.delete("/users/delete/:id", (req, res) => {
       console.log(e);
       res.send("Record and user  Delete failed.");
     });
+});
+
+app.get('/logout', function(req, res) {
+  req.session.destroy(function(err) {
+    if (err) {
+      console.log(err);
+    } else {
+      res.redirect('/');
+    }
+  });
 });
 
 app.get("/*", (req, res) => {
