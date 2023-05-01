@@ -9,7 +9,10 @@ const methodOverride = require("method-override");
 const Admin = require("./models/admin")
 const session = require("express-session")
 const cookieParser = require("cookie-parser")
-
+const crypto = require("crypto");
+const randomGenerator = require("./utils/randomGenerator");
+const encryptPassword = require("./utils/encryptPassword");
+const validatePassword = require("./utils/validatePassword");
 
 app.use(cookieParser())
 app.use(express.static("public"));
@@ -17,21 +20,39 @@ app.use(bodyParser.urlencoded({ extended: true }));
 app.use(methodOverride("_method"));
 app.set("view engine", "ejs");
 
+/**
+ * Express middleware for adding session functionality.
+ *
+ * @function
+ * @param {object} session - An session object
+ * @param {string|function} session.secret - The session secret, which can be a string or a function for generating the secret.
+ * @param {boolean} [session.resave=false] - Whether to force the session to be saved on every request.
+ * @param {boolean} [session.saveUninitialized=true] - Whether to initialize the session on every request.
+ */
 app.use(session({
-  secret: 'keyboard cat',
+  secret: randomGenerator(),
   resave: false,
   saveUninitialized: true,
 }))
-const loginverify = (req , res , next) =>{
-  if(!req.session.isVerifed == true){
-    res.redirect("login")
-  }else{
-    next()
+
+/**
+ * Middleware function to verify whether a user is logged in or not.
+ * @param {Object} req - The request object.
+ * @param {Object} res - The response object.
+ * @param {Function} next - The next middleware function to be called.
+ */
+const loginverify = (req, res, next) => {
+  // Check if the user is verified by checking the `isVerified` flag in the session.
+  if (req.session.isVerifed) {
+    // If the user is verified, call the next middleware function in the chain.
+    next();
+  } else {
+    // If the user is not verified, redirect them to the login page.
+    res.redirect("login");
   }
-}
+};
 
-
-
+// Disable the use of deprecated methods in MongoDB's driver.
 mongoose.set("useFindAndModify", false);
 
 mongoose
@@ -58,7 +79,7 @@ app.post("/login", async(req, res) => {
     if (!foundUser){
       res.send("UserName incorrect")
     }else{
-      if(password == foundUser.password){
+      if(validatePassword(password, foundUser.userhash, foundUser.salt)){
         req.session.isVerifed = true
         console.log(req.session.isVerifed)
         console.log(req.cookies)
@@ -76,10 +97,14 @@ app.get("/login", (req, res) => {
 
 app.post("/signup", async(req, res) => {
   let {username , password} = req.body
-  
+  // Generate a random salt value
+  let salt = randomGenerator();
+  // Encrypt the password with salt
+  let userhash = encryptPassword(password, salt);
+
   let foundUser = await Admin.findOne({username : username})
   if(!foundUser){
-    let newAdmin = new Admin({username , password})
+    let newAdmin = new Admin({username , salt, userhash})
     newAdmin.save().then(() =>{
       res.send("Signup successfully , This is Homepage of Billing Service.");
     }).catch(()=>{
@@ -95,7 +120,6 @@ app.get("/signup", (req, res) => {
   res.render("signup.ejs");
 });
 
-// Complete
 // List all users
 app.get("/users", loginverify , async (req, res) => {
   try {
@@ -105,15 +129,17 @@ app.get("/users", loginverify , async (req, res) => {
     res.send("Error with finding data.");
   }
 });
+
 // Get the insert page
 app.get("/users/insert", loginverify, (req, res) => {
   res.render("userInsert.ejs");
 });
+
 // Get the operation page
 app.get("/users/operation", loginverify,(req, res) => {
   res.render("userOperation.ejs");
 });
-// Complete
+
 // List all records given the id
 app.get("/users/:id", loginverify, async (req, res) => {
   let { id } = req.params;
@@ -127,21 +153,19 @@ app.get("/users/:id", loginverify, async (req, res) => {
     } else {
       res.send("Cannot find this user. Please enter a valid id.");
     }
-  } catch (e) {
+  } catch(e) {
     res.send("Error!!");
     console.log(e);
   }
 });
 
-
-// Complete
 // Create a new users
 app.post("/users/insert",loginverify, async(req, res) => {
   let { id, name} = req.body;
   let service_type = "Create Account";
   let previous_balance = 0;
   let change_amount = 100;
-  let current_balance = previous_balance + change_amount;
+  let current_balance = change_amount;
 
   let data = await User.findOne({ id: id });
   if (data !== null) {
@@ -190,7 +214,7 @@ app.post("/users/operation", loginverify,async(req, res) => {
   let previous_balance = Number(user.current_balance);
   let break_flag = false;
   change_amount = Number(change_amount);
-  if (service_type == "Deposit" && change_amount > 0) {
+  if ((service_type == "Deposit" || service_type == "Credit") && change_amount > 0) {
     var current_balance = previous_balance + change_amount;
   } else if ((service_type == "Withdraw" || service_type == "Billing") && change_amount > 0 && change_amount < previous_balance) {
     var current_balance = previous_balance - change_amount;

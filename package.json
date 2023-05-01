@@ -9,8 +9,10 @@
   "author": "Cheng-Yu Hsieh, Zhao Song, Qiu Lin",
   "license": "ISC",
   "dependencies": {
+    "cookie-parser": "^1.4.6",
     "ejs": "^3.1.5",
     "express": "^4.17.1",
+    "express-session": "^1.17.3",
     "method-override": "^3.0.0",
     "mongoose": "^5.11.9",
     "nodemon": "^2.0.6"
