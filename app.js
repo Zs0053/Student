@@ -1,24 +1,38 @@
-const express = require("express");
-const app = express();
+// Import Basic Packages
+const createError = require('http-errors');
+const express = require('express');
+const path = require('path');
+const cookieParser = require('cookie-parser');
+const logger = require('morgan');
+// Import More Packages
 const ejs = require("ejs");
 const mongoose = require("mongoose");
+const session = require("express-session");
 const bodyParser = require("body-parser");
-const User = require("./models/user");
-const Record = require("./models/record");
 const methodOverride = require("method-override");
-const Admin = require("./models/admin")
-const session = require("express-session")
-const cookieParser = require("cookie-parser")
-const crypto = require("crypto");
-const randomGenerator = require("./utils/randomGenerator");
-const encryptPassword = require("./utils/encryptPassword");
-const validatePassword = require("./utils/validatePassword");
+// Import Modules
+const randomGenerator = require("./routes/utils/randomGenerator");
+// Import Routers
+const indexRouter = require('./routes/index');
+const adminsRouter = require('./routes/admins');
+const loginRouter = require('./routes/login');
+const logoutRouter = require('./routes/logout');
+const signupRouter = require('./routes/signup');
 
-app.use(cookieParser())
-app.use(express.static("public"));
-app.use(bodyParser.urlencoded({ extended: true }));
+
+const app = express();
+
+// view engine setup
+app.set('views', path.join(__dirname, 'views'));
+app.set('view engine', 'ejs');
+// Use basic functions
+app.use(logger('dev'));
+app.use(express.json());
+app.use(express.urlencoded({ extended: false }));
+app.use(cookieParser());
+app.use(express.static(path.join(__dirname, 'public')));
+// Use more functions
 app.use(methodOverride("_method"));
-app.set("view engine", "ejs");
 
 /**
  * Express middleware for adding session functionality.
@@ -68,251 +82,28 @@ mongoose
     console.log(e);
   });
 
-app.get("/", (req, res) => {
-  res.send("Homepage of Billing Service.");
+// Use routers to handle different API requests
+app.use('/', indexRouter);
+app.use('/users', loginverify, adminsRouter);
+app.use('/login', loginRouter);
+app.use('/logout', logoutRouter);
+app.use('/signup', signupRouter);
+
+
+// catch 404 and forward to error handler
+app.use(function(req, res, next) {
+  next(createError(404));
 });
 
-app.post("/login", async(req, res) => {
-  let {username , password} = req.body
+// error handler
+app.use(function(err, req, res, next) {
+  // set locals, only providing error in development
+  res.locals.message = err.message;
+  res.locals.error = req.app.get('env') === 'development' ? err : {};
 
-    let foundUser = await Admin.findOne({username : username})
-    if (!foundUser){
-      res.send("UserName incorrect")
-    }else{
-      if(validatePassword(password, foundUser.userhash, foundUser.salt)){
-        req.session.isVerifed = true
-        console.log(req.session.isVerifed)
-        console.log(req.cookies)
-        res.send("Login successfully , This is Homepage of Billing Service.");
-      }else{
-        res.send("Password incorrect")
-      }
-    }
+  // render the error page
+  res.status(err.status || 500);
+  res.render('error');
 });
 
-app.get("/login", (req, res) => {
-  res.render("login");
-});
-
-
-app.post("/signup", async(req, res) => {
-  let {username , password} = req.body
-  // Generate a random salt value
-  let salt = randomGenerator();
-  // Encrypt the password with salt
-  let userhash = encryptPassword(password, salt);
-
-  let foundUser = await Admin.findOne({username : username})
-  if(!foundUser){
-    let newAdmin = new Admin({username , salt, userhash})
-    newAdmin.save().then(() =>{
-      res.send("Signup successfully , This is Homepage of Billing Service.");
-    }).catch(()=>{
-      res.send("Error!")
-    })
-  }else{
-    res.send("UserName exist")
-  }
-  
-});
-
-app.get("/signup", (req, res) => {
-  res.render("signup.ejs");
-});
-
-// List all users
-app.get("/users", loginverify , async (req, res) => {
-  try {
-    let data = await User.find({});
-    res.render("users.ejs", { data });
-  } catch {
-    res.send("Error with finding data.");
-  }
-});
-
-// Get the insert page
-app.get("/users/create", loginverify, (req, res) => {
-  res.render("userCreate.ejs");
-});
-
-// Get the operation page
-app.get("/users/operation", loginverify,(req, res) => {
-  res.render("userOperation.ejs");
-});
-
-// List all records given the id
-app.get("/users/:id", loginverify, async (req, res) => {
-  let { id } = req.params;
-  try {
-    // All records
-    let records = await Record.find({ id: id });
-    // User info
-    let data = await User.findOne({ id: id });
-    if (data !== null) {
-      res.render("userPage.ejs", { data, records });
-    } else {
-      res.send("Cannot find this user. Please enter a valid id.");
-    }
-  } catch(e) {
-    res.send("Error!!");
-    console.log(e);
-  }
-});
-
-// Create a new users
-app.post("/users/create", loginverify, async (req, res) => {
-  let { id, name } = req.body;
-  let service_type = "Create Account";
-  let previous_balance = 0;
-  let change_amount = 100;
-  let current_balance = change_amount;
-
-  let data = await User.findOne({ id: id });
-  if (data !== null) {
-    res.send("ID conflict.");
-  } else {
-    try {
-      let newUser = new User({
-        id,
-        name,
-        current_balance,
-      });
-
-      let newRecord = new Record({
-        id,
-        service_type,
-        previous_balance,
-        change_amount,
-        current_balance,
-      });
-
-      await newUser.save();
-      await newRecord.save();
-
-      console.log("user and record accepted.");
-      res.render("accept.ejs");
-    } catch (e) {
-      console.log("user and record not accepted.");
-      console.log(e);
-      res.render("reject.ejs");
-    }
-  }
-});
-
-app.post("/users/operation", loginverify, async (req, res) => {
-  let { id, name, service_type, change_amount } = req.body;
-  try {
-    let user = await User.findOne({ id: id });
-    if (!user) {
-      res.send("User not found.");
-      return;
-    }
-    
-    let previous_balance = Number(user.current_balance);
-    change_amount = Number(change_amount);
-    let current_balance;
-
-    if (
-      (service_type == "Deposit" || service_type == "Credit") &&
-      change_amount > 0
-    ) {
-      current_balance = previous_balance + change_amount;
-    } else if (
-      (service_type == "Withdraw" || service_type == "Billing") &&
-      change_amount > 0 &&
-      change_amount <= previous_balance
-    ) {
-      current_balance = previous_balance - change_amount;
-    } else {
-      res.send("Invalid Service Type or Amount.");
-      return;
-    }
-
-    await User.updateOne(
-      { id: id },
-      { current_balance: current_balance }
-    );
-
-    let newRecord = new Record({
-      id,
-      service_type,
-      previous_balance,
-      change_amount,
-      current_balance,
-    });
-
-    await newRecord.save();
-    console.log("record accepted.");
-    res.render("accept.ejs");
-  } catch (e) {
-    console.log("record not accepted.");
-    console.log(e);
-    res.render("reject.ejs");
-  }
-});
-
-app.get("/users/edit/:id",loginverify, async (req, res) => {
-  let { id } = req.params;
-  try {
-    let data = await User.findOne({ id : id});
-    if (data !== null) {
-      res.render("edit.ejs", { data });
-    } else {
-      res.send("Cannot find user.");
-    }
-  } catch {
-    res.send("Error!");
-  }
-});
-
-app.put("/users/edit/:id",loginverify, async (req, res) => {
-  let { id } = req.params;
-  let { name } = req.body;
-  try {
-    let d = await User.findOneAndUpdate({ id },{name});
-    res.redirect(`/users/${id}`);
-  } catch {
-    res.render("reject.ejs");
-  }
-});
-
-
-app.delete("/users/delete/:id",loginverify,(req, res) => {
-  let { id } = req.params;
-  console.log(id)
-  User.deleteOne({ id })
-    .then((meg) => {
-      console.log(meg);
-    })
-    .catch((e) => {
-      console.log(e);
-    });
-    Record.deleteMany({ id })
-    .then((meg) => {
-      console.log(meg);
-      res.send("Record and user Deleted successfully.");
-    })
-    .catch((e) => {
-      console.log(e);
-      res.send("Record and user  Delete failed.");
-    });
-});
-
-app.get('/logout', function(req, res) {
-  req.session.destroy(function(err) {
-    if (err) {
-      console.log(err);
-    } else {
-      res.redirect('/');
-    }
-  });
-});
-
-app.get("/*", (req, res) => {
-  res.status(404);
-  res.send("Not allowed.");
-});
-
-app.listen(3000, () => {
-  console.log("Server is running on port 3000.");
-});
+module.exports = app;
